@@ -111,6 +111,92 @@ Once we already receive a response from the website we want to display it to the
         </div>
       )}
 ```
+# Stock Widget Creation
+## 1 API Registration
+Similar to the weather widget we would need to create an API Key to access stock market prices, here we are using https://finnhub.io as our API. We would also need to understand what the response would be like and what kind of data we would take, so take a look at the documentation and see what you want information you would like to pull. For this API we would want to see the quotes over a certain time period and we can see the response attributes from this link https://finnhub.io/docs/api/quote, and we will be using those to generate the graph. 
 
+The message received by Finnhub 
+- `c` - Current price
+- `d` - Change
+- `dp` - Percent change
+- `h` - High price of the day
+- `l` - Low price of the day
+- `o` - Open price of the day
+- `pc` - Previous close price
 
+### 1.2 Installing the dependencies
+Since we are using recharts to show the graphs, we will need to to install it using ```npm install recharts``` on your command line
+
+## 2 State Management
+We need to setup state variables here:
+- `ticker` – Stores user input for the stock symbol.
+- `watchlist` – Holds the list of added stocks.
+- `selectedStock` – Stores data for the currently selected stock.
+- `error` – Displays error messages.
+
+```
+const StockTracker = () => {
+  const [ticker, setTicker] = useState("");
+  const [watchlist, setWatchlist] = useState([]);
+  const [selectedStock, setSelectedStock] = useState(null);
+  const [error, setError] = useState("");
+```
+## 3 Fetch Data Function
+After setting up we would need to interact with the API in order to obtain the response from the message. Similar to the weather app, please replace the `YOUR_API_KEY_HERE` with your own API key.
+```
+const fetchStockData = async (symbol) => {
+  try {
+    const response = await fetch(
+      `https://finnhub.io/api/v1/quote?symbol=${symbol.toUpperCase()}&token=YOUR_API_KEY_HERE`
+    );
+    const data = await response.json();
+
+    if (!data || !data.c) {
+      setError("Invalid ticker or data not found");
+      return null;
+    } else {
+      setError("");
+      return {
+        symbol,
+        currentPrice: data.c,
+        change: data.d,
+        high: data.h,
+        low: data.l,
+        open: data.o,
+        previousClose: data.pc,
+        history: generateMockData(), // Temporary mock data for the graph
+       };
+    }
+  } catch (err) {
+    setError("Error fetching stock data");
+    return null;
+  }
+};
+```
+## 4 Function to add Tickers into the watchlist
+Now that we have a function to call the API, we can store it inside of the watchlist. It first checks if the ticker field is empty, if its not empty then it fetches the stock data, and add it to the watchlist if its valid then we will clear the ticker field to empty afterwards.
+```
+  const addTicker = async () => {
+    if (!ticker) return;
+    const stock = await fetchStockData(ticker);
+    if (stock) {
+      setWatchlist((prev) => [...prev, stock]);
+      setTicker("");
+    }
+  };
+
+```
+## 5 Function to Remove ticker and Select the Current Stock
+To remove the ticker, we will be creating a new array that excludes the stock without the symbol, and once we remove it we will deslect it from the watchlist. With the selectStock, we just add it to the setSelectStock where we will be elaborating more about the selected stock.
+```
+  const removeTicker = (symbol) => {
+    setWatchlist(watchlist.filter((stock) => stock.symbol !== symbol));
+    if (selectedStock?.symbol === symbol) setSelectedStock(null);
+  };
+
+  const selectStock = (stock) => {
+    setSelectedStock(stock);
+  };
+```
+## Generate Mock Data for the 
 
