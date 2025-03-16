@@ -198,5 +198,105 @@ To remove the ticker, we will be creating a new array that excludes the stock wi
     setSelectedStock(stock);
   };
 ```
-## Generate Mock Data for the 
+## 6 Generate Mock Data for the graph
+Since the API's live price fluctuations are locked behind a paywall, we'll just making a mock graph to mimic the price movement of the stock. Here we just use $100 as the base line and using mathrandom to generate random numbers multiply it by 10 and fix it to 2 decimal places, and making 10 arrays so 10 different price points.
+```
+  const generateMockData = () => {
+    return Array.from({ length: 10 }, (_, i) => ({
+      time: `Day ${i + 1}`,
+      price: (Math.random() * 10 + 100).toFixed(2),
+    }));
+  };
+```
+## 7 Creating the UI of the Stock Search Input
+Here we build the UI to search for the stocks as well as adding functionality such as adding the ticker into the watchlist. As well as displaying the error messages
 
+```
+    <div className="max-w-2xl mx-auto p-6 bg-gray-900 text-white rounded-lg shadow-lg">
+      <h1 className="text-2xl font-bold text-center mb-4">Stock Tracker</h1>
+
+      {/* Search Input */}
+      <div className="flex mb-4">
+        <input
+          type="text"
+          placeholder="Enter stock ticker (e.g., AAPL)"
+          value={ticker}
+          onChange={(e) => setTicker(e.target.value)}
+          className="flex-1 p-2 rounded text-white"
+        />
+        <button
+          onClick={addTicker}
+          className="ml-2 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition"
+        >
+          + Add
+        </button>
+      </div>
+
+      {error && <p className="text-red-400 mb-2">{error}</p>}
+```
+## 8 Watchlist UI
+For the watchlist UI, we will have to check if there are at least 1 item inside the watchlist, then it will add in the key with the stock symbol as well as a remove button which will default it to the stock.symbol on click. It also checks to see the change variable from the stock, and displays an up or down arrow depending on the price change relative to $0.
+```
+      {/* Watchlist */}
+      <div className="bg-gray-800 p-4 rounded-lg mb-4">
+        <h2 className="text-lg font-semibold mb-2">Watchlist</h2>
+        {watchlist.length > 0 ? (
+          <ul>
+            {watchlist.map((stock) => (
+              <li
+                key={stock.symbol}
+                className="flex justify-between items-center p-2 border-b border-gray-700 cursor-pointer hover:bg-gray-700 transition"
+                onClick={() => selectStock(stock)}
+              >
+                <span>{stock.symbol}</span>
+                <div className="flex items-center">
+                  <span className={`mr-2 ${stock.change >= 0 ? "text-green-400" : "text-red-400"}`}>
+                    {stock.change >= 0 ? "▲" : "▼"} ${stock.change.toFixed(2)}
+                  </span>
+                  <button
+                    className="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeTicker(stock.symbol);
+                    }}
+                  >
+                    Remove
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-gray-400">No stocks added yet</p>
+        )}
+      </div>
+```
+## 9 Displaying Stock Details       
+If the user has clicked on the stock tracker, then it will display the additional information such as the current price, etc. To display the mock graph we will be using a `responsiveContainer` which will automatically adjust the chart size based on the available space. We will then be giving the data from the mock history from `selectedStock.history`, and give it 2 axis which is time and price. The tooltip is there to pop up details when the user hovers over the charts and show exact prices. 
+```
+{/* Stock Details */}
+      {selectedStock && (
+        <div className="p-4 bg-gray-800 rounded-lg">
+          <h2 className="text-lg font-semibold mb-2">{selectedStock.symbol} Details</h2>
+          <p>Current Price: ${selectedStock.currentPrice.toFixed(2)}</p>
+          <p>Open: ${selectedStock.open.toFixed(2)}</p>
+          <p>High: ${selectedStock.high.toFixed(2)}</p>
+          <p>Low: ${selectedStock.low.toFixed(2)}</p>
+          <p>Previous Close: ${selectedStock.previousClose.toFixed(2)}</p>
+
+          {/* Stock Price Graph */}
+          <div className="mt-4">
+            <h3 className="text-lg font-semibold mb-2">Price Trend</h3>
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={selectedStock.history}>
+                <XAxis dataKey="time" stroke="#ccc" />
+                <YAxis domain={["auto", "auto"]} stroke="#ccc" />
+                <Tooltip />
+                <Line type="monotone" dataKey="price" stroke="#4CAF50" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+    </div>
+```
