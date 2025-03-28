@@ -1,6 +1,6 @@
 # 🏆 Hackiethon2025 Widget Challenge
 
-## 📌 Overview
+#📌 Overview
 
 The **Hackiethon2025 Widget Challenge** is a coding competition aimed at enhancing students' enthusiasm for programming, strengthening their understanding of fundamental web development concepts, and fostering creativity and imagination.
 
