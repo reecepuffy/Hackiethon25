@@ -10,7 +10,7 @@ const MyWidget = () => {
     const initialState = {
       isTimerRunning: false,
       timeElapsedInSeconds: 0,
-      timerLimitInMinutes: 2,
+      timerLimitInMinutes: 25,
     };
 
     const [state, setState] = useState(initialState);
