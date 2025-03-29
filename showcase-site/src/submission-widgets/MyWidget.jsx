@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import './timer.css';
 
 const MyWidget = () => {
-  const [text, setText] = useState('Hello, World!');
-  const changeText = () => setText('Text has been changed!');
+  const [totalPoints, setTotalPoints] = useState(0);
 
   // const is used when you know the variable should not and therefore cannot be changed.
   const DigitalTimer = () => {
@@ -11,12 +10,19 @@ const MyWidget = () => {
       isTimerRunning: false,
       timeElapsedInSeconds: 0,
       timerLimitInMinutes: 25,
+      sessionCompleted: false
     };
 
     const [state, setState] = useState(initialState);
-    const { isTimerRunning, timeElapsedInSeconds, timerLimitInMinutes } = state;
+    const { isTimerRunning, timeElapsedInSeconds, timerLimitInMinutes, sessionCompleted } = state;
     
-    const intervalIdRef = useRef(null); // Persist interval ID across renders
+    const intervalIdRef = useRef(null); // continue interval ID across renders
+
+    // Calculate points based on timer duration
+    const calculatePoints = (minutes) => {
+      // Basic formula: 2 points per minute of completed study
+      return minutes * 2;
+    };
 
     useEffect(() => {
       if (isTimerRunning) {
@@ -24,9 +30,16 @@ const MyWidget = () => {
           setState((prevState) => {
             const isTimerCompleted = prevState.timeElapsedInSeconds === prevState.timerLimitInMinutes * 60;
             
-            if (isTimerCompleted) {
+            if (isTimerCompleted && !prevState.sessionCompleted) {
               clearInterval(intervalIdRef.current);
-              return { ...prevState, isTimerRunning: false };
+              // Award points when timer completes
+              const pointsEarned = calculatePoints(prevState.timerLimitInMinutes);
+              setTotalPoints(prevPoints => prevPoints + pointsEarned);
+              return { 
+                ...prevState, 
+                isTimerRunning: false,
+                sessionCompleted: true 
+              };
             }
 
             return { ...prevState, timeElapsedInSeconds: prevState.timeElapsedInSeconds + 1 };
@@ -70,7 +83,7 @@ const MyWidget = () => {
 
     const onResetTimer = () => {
       clearInterval(intervalIdRef.current);
-      setState(initialState);
+      setState(initialState); // Fixed: should reset to initialState, not prevState
     };
 
     const getElapsedSecondsInTimeFormat = () => {
@@ -150,6 +163,19 @@ const MyWidget = () => {
       );
     };
 
+    // Display a message when timer completes
+    const renderCompletionMessage = () => {
+      if (sessionCompleted) {
+        const pointsEarned = calculatePoints(timerLimitInMinutes);
+        return (
+          <div className="completion-message" style={{ color: 'green', marginTop: '10px', fontWeight: 'bold' }}>
+            🎉 You earned {pointsEarned} points!
+          </div>
+        );
+      }
+      return null;
+    };
+
     // Component render
     return (
       <div className="digital-timer-container">
@@ -157,6 +183,7 @@ const MyWidget = () => {
           <div className="elapsed-time-container">
             <h1 className="elapsed-time">{getElapsedSecondsInTimeFormat()}</h1>
             <p className="timer-state">{isTimerRunning ? 'Running' : 'Paused'}</p>
+            {renderCompletionMessage()}
           </div>
         </div>
         <div className="controls-container">
@@ -170,21 +197,12 @@ const MyWidget = () => {
   return (
     <div className="p-6 max-w-sm mx-auto bg-white rounded-xl shadow-lg">
       <div className="text-center space-y-4">
-        <h2 className="text-xl font-bold text-gray-800">My Widget</h2>
-
-        <div className="text-2xl font-bold text-blue-600">{text}</div>
-
-        <div className="flex justify-center">
-          <button
-            onClick={changeText}
-            className="p-2 bg-blue-100 rounded-full hover:bg-blue-200 transition-colors"
-          >
-            Change Text
-          </button>
+        <div className="points-display text-lg font-bold bg-green-100 py-2 px-4 rounded-lg inline-block">
+          <span>Total Points: {totalPoints}</span>
         </div>
 
         <div className="mt-6">
-          <h3 className="text-lg font-bold">Countdown Timer</h3>
+          <h3 className="text-lg font-bold">Study Timer</h3>
           <DigitalTimer />
         </div>
       </div>
